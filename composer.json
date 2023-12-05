@@ -4,7 +4,10 @@
   "description": "",
   "license": "MIT",
   "config": {
-    "sort-packages": true
+    "sort-packages": true,
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
   },
   "require": {
     "php": "^8.2",
@@ -26,5 +29,8 @@
     "psr-4": {
       "Zestic\\Authentication\\": "src/"
     }
+  },
+  "require-dev": {
+    "pestphp/pest": "2.x-dev"
   }
 }
