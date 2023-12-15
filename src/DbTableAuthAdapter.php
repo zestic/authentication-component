@@ -3,11 +3,11 @@ declare(strict_types=1);
 
 namespace Zestic\Authentication;
 
-use Zestic\Authentication\Entity\AuthLookup;
 use Laminas\Authentication\Adapter\DbTable\CallbackCheckAdapter;
 use Laminas\Authentication\Result;
 use Laminas\Db\Adapter\Adapter as DbAdapter;
 use Laminas\Db\ResultSet\ResultSet;
+use Zestic\Authentication\Entity\AuthLookup;
 
 final class DbTableAuthAdapter extends CallbackCheckAdapter
 {
