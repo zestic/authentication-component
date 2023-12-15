@@ -3,27 +3,22 @@ declare(strict_types=1);
 
 namespace Zestic\Authentication\Repository;
 
-use AMB\Interactor\Db\BoolToSQL;
-use Domain\Membership\Entity\Member;
-use Domain\Membership\Entity\Membership;
 use Laminas\Db\Adapter\Adapter as DbAdapter;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use Zestic\Authentication\DbTableAuthAdapter;
 use Zestic\Authentication\Entity\NewAuthLookup;
-use Zestic\Authentication\Interactor\CreateAuthLookup;
+use Zestic\Authentication\Exception\AuthLookupException;
 use Zestic\Authentication\Interactor\UpdateAuthLookup;
 use Zestic\Authentication\Interface\NewAuthLookupInterface;
 
-class AuthLookupRepository
+class AuthLookupRepository implements UserRepositoryInterface
 {
-    private DbAdapter $dbAdapter;
-    private string $tableName;
+    public DbAdapter $dbAdapter;
+    public string $tableName;
 
     public function __construct(
-        private CreateAuthLookup $createAuthLookup,
-        private DbTableAuthAdapter $authAdapter,
-        private UpdateAuthLookup $updateAuthLookup,
+        public readonly DbTableAuthAdapter $authAdapter,
     ) {
         $this->dbAdapter = $this->authAdapter->getDbAdapter();
         $this->tableName = $this->authAdapter->getTableName();
@@ -31,32 +26,26 @@ class AuthLookupRepository
 
     public function create(NewAuthLookupInterface $authLookup): UuidInterface
     {
-        return $this->createAuthLookup->create($authLookup);
-    }
-
-    public function createForMember(Membership $membership, Member $member, ?string $password = null): UuidInterface
-    {
-        $password = $password ?? base_convert((string)rand(1, 100000), 10, 36);
-
-        $authLookup = new NewAuthLookup(
-            $member->getEmail(),
-            $password,
-            $membership->getPmb(),
-        );
-        $id = $this->create($authLookup);
-        $data = [
-            'is_primary' => $member->isPrimary() ? 1 : 0,
-            'user_id'    => $membership->getId(),
-            'username'   => $membership->getPmb(),
-        ];
-        $this->updateLookup($id, $data);
-
-        return $id;
+        $username = $newAuthLookup->getUsername();
+        $id = Uuid::uuid4();
+        $password = password_hash($newAuthLookup->getPassword(), PASSWORD_BCRYPT);
+        $email = strtolower($newAuthLookup->getEmail());
+        $sql = <<<SQL
+INSERT INTO {$this->tableName}
+    (email, id, password, username)
+     VALUES ('{$email}', '{$id->toString()}', '$password', '$username');
+SQL;
+        $statement = $this->dbAdapter->createStatement($sql);
+        $result = $statement->execute();
+        if ($result->valid()) {
+            return $id;
+        }
+        throw new AuthLookupException('There was an problem saving the authentication user');
     }
 
     public function deleteLookup(UuidInterface|string $id): bool
     {
-        $id = (string) $id;
+        $id = (string)$id;
         $sql = <<<SQL
 DELETE FROM {$this->tableName}
 WHERE id = '{$id}';
@@ -67,88 +56,77 @@ SQL;
         return $result->valid();
     }
 
-    public function getAuthAdapter(): DbTableAuthAdapter
+    public function findLookupByUserId($userId): ?AuthLookupInterface
     {
-        return $this->authAdapter;
+        return $this->authAdapter->findAuthLookupByParameter('user_id', $userId);
     }
 
-    public function getDbAdapter(): DbAdapter
+    public function findLookupByUsername($userId): ?AuthLookupInterface
     {
-        return $this->dbAdapter;
+        return $this->authAdapter->findAuthLookupByParameter('username', $userId);
     }
 
-    public function getIdentityColumn(): string
-    {
-        return $this->authAdapter->getIdentityColumn();
-    }
-
-    public function getTableName(): string
-    {
-        return $this->tableName;
-    }
-
-    public function getMembershipLookupIds(Membership $membership): ?array
+    public function isEmailAvailable(string $email): bool
     {
         $sql = <<<SQL
-SELECT id
-    FROM {$this->tableName}
-WHERE user_id = '{$membership->getId()}'
-SQL;
-
-        $statement = $this->dbAdapter->createStatement($sql);
-        $result = $statement->execute();
-        if (0 === $result->count()) {
-            return null;
-        }
-        $ids = [];
-        foreach ($result as $data) {
-            $ids[] = Uuid::fromString($data['id']);
-        }
-
-        return $ids;
-    }
-
-
-    public function getLookupId(Member $member): ?UuidInterface
-    {
-        $isPrimary = (new BoolToSQL)($member->isPrimary());
-        $sql = <<<SQL
-SELECT id
-    FROM {$this->tableName}
-WHERE email = '{$member->getEmail()}'
-    AND is_primary = {$isPrimary}
-    AND user_id = '{$member->getMembershipId()}'
+SELECT id 
+FROM {$this->tableName}
+WHERE LOWER(email) = LOWER('{$email}');
 SQL;
         $statement = $this->dbAdapter->createStatement($sql);
         $result = $statement->execute();
-        if (!$data = $result->current()) {
-            return null;
-        }
 
-        return Uuid::fromString($data['id']);
+        return !(bool)$result->getAffectedRows();
+    }
+
+    public function isUsernameAvailable(string $username): bool
+    {
+        if ($this->checkForRestrictedUsername->isRestricted($username)) {
+            return false;
+        }
+        $sql = <<<SQL
+SELECT id 
+FROM {$this->tableName}
+WHERE LOWER('{$this->authAdapter->getIdentityColumn()}') = LOWER('{$username}');
+SQL;
+        $statement = $this->dbAdapter->createStatement($sql);
+        $result = $statement->execute();
+
+        return !(bool)$result->getAffectedRows();
     }
 
     public function updateLookup(UuidInterface $id, array $data): bool
     {
-        if (isset($data['isPrimary'])) {
-            $data['is_primary'] = (new BoolToSQL)($data['isPrimary']);
-            unset($data['isPrimary']);
-        }
-        if (isset($data['is_primary'])) {
-            $data['is_primary'] = (new BoolToSQL)($data['is_primary']);
-        }
+        $setData = $this->prepData($data);
+        $sql = <<<SQL
+UPDATE {$this->authAdapter->getTableName()}
+SET $setData
+WHERE id = '{$id->toString()}';
+SQL;
+        $dbAdapter = $this->authAdapter->getDbAdapter();
+        $statement = $dbAdapter->createStatement($sql);
+        $result = $statement->execute();
 
-        return $this->updateAuthLookup->update($id, $data);
+        return $result->valid();
     }
 
-    public function updateEmail(Member $member, string $email): bool
+    public function updatePasswordByUsername($username, $password)
     {
-        if ($id = $this->getLookupId($member)) {
-            $this->updateLookup($id, ['email' => $email]);
+        $lookup = $this->findLookupByUsername($username);
+        $this->updateLookup($lookup->getId(), ['password' => $password]);
+    }
 
-            return true;
+    private function prepDataForUpdate(array $data): string
+    {
+        if (isset($data['password'])) {
+            $data['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
+        }
+        unset($data['id']);
+        $setData = [];
+        foreach ($data as $column => $value) {
+            $setData[] = "$column = '$value'";
         }
 
-        return false;
+        return implode(',', $setData);
     }
 }
