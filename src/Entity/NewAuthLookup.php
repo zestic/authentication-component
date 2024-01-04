@@ -10,6 +10,7 @@ final class NewAuthLookup implements NewAuthLookupInterface
     public function __construct(
         private string $email,
         private string $password,
+        private string|int $userId,
         private ?string $username = null,
     ) {}
 
@@ -21,6 +22,11 @@ final class NewAuthLookup implements NewAuthLookupInterface
     public function getPassword(): string
     {
         return $this->password;
+    }
+
+    public function getUserId(): string|int
+    {
+        return $this->userId;
     }
 
     public function getUsername(): ?string
