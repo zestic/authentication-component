@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zestic\Authentication;
 
+use Mezzio\Authentication\UserInterface;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\UuidInterface;
 use Zestic\Authentication\Interface\NewAuthLookupInterface;
@@ -20,9 +21,24 @@ class AuthenticationManager
     ) {
     }
 
-    public function authenticate()
+    public function authenticate(string $credential, ?string $password = null): ?UserInterface
     {
+        if (!$authLookup = $this->authLookupRepository->authenticate($credential, $password)) {
+            $result = $this->authLookupRepository->authenticationResult();
+        }
 
+        $user = $this->findUserById->find($authLookup->getUserId());
+        if (!$user) {
+            // throw
+        }
+        $data = [
+            'credential' => $credential,
+            'success' => true,
+        ];
+
+        $this->logIt('AuthenticateUser', $data);
+
+        return $user;
     }
 
     public function logout()
@@ -43,6 +59,7 @@ class AuthenticationManager
             'email' => $newAuthLookup->getEmail(),
             'userId' => $newAuthLookup->getUserId(),
             'username' => $newAuthLookup->getUsername(),
+            'success' => true,
         ];
         $this->logIt('RegisterUser', $data);
 

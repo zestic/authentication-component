@@ -1,9 +1,11 @@
 <?php
 
+use Mezzio\Authentication\UserInterface;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use Zestic\Authentication\AuthLookupRepository;
 use Zestic\Authentication\AuthenticationManager;
+use Zestic\Authentication\Entity\AuthLookup;
 use Zestic\Authentication\Entity\NewAuthLookup;
 use Zestic\Authentication\Interface\FindUserByIdInterface;
 use Zestic\Authentication\Interface\UserClientDataInterface;
@@ -26,23 +28,21 @@ test('register user', function () use ($manager, $repository, $logger, $userClie
     $userClientData->shouldReceive('getData')->andReturn($userData);
 
     $email = $faker->email();
-    $password = $faker->password();
     $userId = $faker->uuid();
     $username = $faker->userName();
 
     $context = [
-        'data' => [
-            'email' => $email,
-            'userId' => $userId,
-            'username' => $username,
-        ],
-        'user' => $userData,
+        'email' => $email,
+        'userId' => $userId,
+        'username' => $username,
+        'success' => true,
+        'userClientData' => $userData,
     ];
     $logger->shouldReceive('info')->with('RegisterUser', $context);
 
     $newAuthLookup = new NewAuthLookup(
         $email,
-        $password,
+        $faker->password(),
         $userId,
         $username,
     );
@@ -50,8 +50,30 @@ test('register user', function () use ($manager, $repository, $logger, $userClie
     expect($lookupId)->toBe($uuid);
 });
 
-test('authenticate user', function () {
-    expect(true)->toBeTrue();
+test('authenticate user', function () use ($manager, $repository, $findUserById, $logger, $userClientData, $faker) {
+    $email = $faker->email();
+
+    $details = [];
+    $authLookup = new AuthLookup($email, [], $details);
+    $repository->shouldReceive('authenticate')->andReturn($authLookup);
+
+    $user = Mockery::mock(UserInterface::class);
+    $findUserById->shouldReceive('find')->andReturn($user);
+
+    $userData = [];
+    $userClientData->shouldReceive('getData')->andReturn($userData);
+
+    $context = [
+        'data' => [
+            'credential' => $email,
+            'success' => true,
+        ],
+        'userClientData' => $userData,
+    ];
+    $logger->shouldReceive('info')->with('AuthenticateUser', $context);
+
+    $authenticatedUser = $manager->authenticate($email, $faker->password());
+    expect($authenticatedUser)->toBe($authenticatedUser);
 })->depends('register user');
 
 test('logout user', function () {
@@ -64,7 +86,7 @@ test('generate password reset token', function () {
 
 test('reset password from token', function () {
     expect(true)->toBeTrue();
-})->depends('forgot password');
+})->depends('generate password reset token');
 
 test('set password', function () {
     expect(true)->toBeTrue();
