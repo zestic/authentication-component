@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Zestic\Authentication\Repository;
+namespace Zestic\Authentication;
 
 use Laminas\Db\Adapter\Adapter as DbAdapter;
 use Ramsey\Uuid\Uuid;
@@ -12,7 +12,7 @@ use Zestic\Authentication\Exception\AuthLookupException;
 use Zestic\Authentication\Interactor\UpdateAuthLookup;
 use Zestic\Authentication\Interface\NewAuthLookupInterface;
 
-class AuthLookupRepository implements UserRepositoryInterface
+class AuthenticationRepository implements UserRepositoryInterface
 {
     public DbAdapter $dbAdapter;
     public string $tableName;
