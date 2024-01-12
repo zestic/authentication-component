@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace Zestic\Authentication;
 
+use Laminas\Authentication\Result;
 use Laminas\Db\Adapter\Adapter as DbAdapter;
+use Mezzio\Authentication\UserRepositoryInterface;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use Zestic\Authentication\DbTableAuthAdapter;
@@ -24,12 +26,26 @@ class AuthenticationRepository implements UserRepositoryInterface
         $this->tableName = $this->authAdapter->getTableName();
     }
 
-    public function create(NewAuthLookupInterface $authLookup): UuidInterface
+    public function authenticate(string $identity, string $credential = null): ?AuthLookup
     {
-        $username = $newAuthLookup->getUsername();
+        $this->authAdapter
+            ->setIdentity($identity)
+            ->setCredential($credential);
+
+        return $this->authAdapter->authenticateUser();
+    }
+
+    public function authenticationResult(): ?Result
+    {
+        return $this->authAdapter->getResult();
+    }
+
+    public function createLookup(NewAuthLookupInterface $authLookup): UuidInterface
+    {
+        $username = $authLookup->getUsername();
         $id = Uuid::uuid4();
-        $password = password_hash($newAuthLookup->getPassword(), PASSWORD_BCRYPT);
-        $email = strtolower($newAuthLookup->getEmail());
+        $password = password_hash($authLookup->getPassword(), PASSWORD_BCRYPT);
+        $email = strtolower($authLookup->getEmail());
         $sql = <<<SQL
 INSERT INTO {$this->tableName}
     (email, id, password, username)

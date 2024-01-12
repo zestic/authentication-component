@@ -14,7 +14,7 @@ use Zestic\Authentication\Interface\UserClientDataInterface;
 class AuthenticationManager
 {
     public function __construct(
-        private AuthLookupRepository $authLookupRepository,
+        private AuthenticationRepository $authLookupRepository,
         private FindUserByIdInterface $findUserById,
         private ?LoggerInterface $logger = null,
         private ?UserClientDataInterface $userClientData = null,
