@@ -3,7 +3,7 @@
 use Mezzio\Authentication\UserInterface;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
-use Zestic\Authentication\AuthLookupRepository;
+use Zestic\Authentication\AuthenticationRepository;
 use Zestic\Authentication\AuthenticationManager;
 use Zestic\Authentication\Entity\AuthLookup;
 use Zestic\Authentication\Entity\NewAuthLookup;
@@ -12,7 +12,7 @@ use Zestic\Authentication\Interface\UserClientDataInterface;
 
 $faker = Faker\Factory::create();
 
-$repository = Mockery::mock(AuthLookupRepository::class);
+$repository = Mockery::mock(AuthenticationRepository::class);
 $findUserById = Mockery::mock(FindUserByIdInterface::class);
 $logger = Mockery::mock(LoggerInterface::class);
 $userClientData = Mockery::mock(UserClientDataInterface::class);
@@ -32,10 +32,12 @@ test('register user', function () use ($manager, $repository, $logger, $userClie
     $username = $faker->userName();
 
     $context = [
-        'email' => $email,
-        'userId' => $userId,
-        'username' => $username,
-        'success' => true,
+        'data' => [
+            'email' => $email,
+            'userId' => $userId,
+            'username' => $username,
+            'success' => true,
+        ],
         'userClientData' => $userData,
     ];
     $logger->shouldReceive('info')->with('RegisterUser', $context);
