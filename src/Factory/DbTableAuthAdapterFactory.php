@@ -40,7 +40,7 @@ final class DbTableAuthAdapterFactory
             $config['column']['identity'],
             $config['column']['credential'],
             $config['credentialValidationCallback'],
-            $config['hasRestrictedUsernames'] ?? false,
+            $config['hasRestrictedUsernames'] ?? null,
         );
     }
 }

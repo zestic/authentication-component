@@ -14,17 +14,17 @@ use Zestic\Authentication\Interface\UserClientDataInterface;
 class AuthenticationManager
 {
     public function __construct(
-        private AuthenticationRepository $authLookupRepository,
-        private FindUserByIdInterface $findUserById,
-        private ?LoggerInterface $logger = null,
-        private ?UserClientDataInterface $userClientData = null,
+        protected AuthenticationRepository $authenticationRepository,
+        protected FindUserByIdInterface $findUserById,
+        protected ?LoggerInterface $logger = null,
+        protected ?UserClientDataInterface $userClientData = null,
     ) {
     }
 
     public function authenticate(string $credential, ?string $password = null): ?UserInterface
     {
-        if (!$authLookup = $this->authLookupRepository->authenticate($credential, $password)) {
-            $result = $this->authLookupRepository->authenticationResult();
+        if (!$authLookup = $this->authenticationRepository->authenticate($credential, $password)) {
+            $result = $this->authenticationRepository->authenticationResult();
         }
 
         $user = $this->findUserById->find($authLookup->getUserId());
@@ -53,7 +53,7 @@ class AuthenticationManager
 
     public function register(NewAuthLookupInterface $newAuthLookup): UuidInterface
     {
-        $id = $this->authLookupRepository->createLookup($newAuthLookup);
+        $id = $this->authenticationRepository->createLookup($newAuthLookup);
 
         $data = [
             'email' => $newAuthLookup->getEmail(),

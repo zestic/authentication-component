@@ -8,24 +8,23 @@ use Laminas\Authentication\Result;
 use Laminas\Db\Adapter\Adapter as DbAdapter;
 use Laminas\Db\ResultSet\ResultSet;
 use Zestic\Authentication\Entity\AuthLookup;
+use Zestic\Authentication\Entity\TableContext;
 
-final class DbTableAuthAdapter extends CallbackCheckAdapter
+class DbTableAuthAdapter extends CallbackCheckAdapter
 {
     private ?Result $result;
 
     public function __construct(
         DbAdapter $laminasDb,
-        $tableName,
-        $identityColumn,
-        $credentialColumn,
+        protected TableContext $tableContext,
         $credentialValidationCallback,
-        private $hasRestrictedUsernames,
+        private $hasRestrictedUsernames = null,
     ) {
         parent::__construct(
             $laminasDb,
-            $tableName,
-            $identityColumn,
-            $credentialColumn,
+            $tableContext->authLookupTableName,
+            $tableContext->authLookupIdentityColumn,
+            $tableContext->authLookupCredentialColumn,
             $credentialValidationCallback,
         );
     }
