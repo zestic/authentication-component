@@ -9,6 +9,7 @@ use Mezzio\Authentication\UserRepositoryInterface;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use Zestic\Authentication\DbTableAuthAdapter;
+use Zestic\Authentication\Entity\AuthLookup;
 use Zestic\Authentication\Entity\NewAuthLookup;
 use Zestic\Authentication\Exception\AuthLookupException;
 use Zestic\Authentication\Interactor\UpdateAuthLookup;
