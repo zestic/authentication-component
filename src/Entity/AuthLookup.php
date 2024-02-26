@@ -7,12 +7,12 @@ use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use Zestic\Authentication\Interface\AuthLookupInterface;
 
-final class AuthLookup implements AuthLookupInterface
+class AuthLookup implements AuthLookupInterface
 {
     public function __construct(
-        private string $identity,
-        private array $roles = [],
-        private array $details = [],
+        protected string $identity,
+        protected array $roles = [],
+        protected array $details = [],
     ) {
     }
 

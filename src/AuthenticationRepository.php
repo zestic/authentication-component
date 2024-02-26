@@ -13,6 +13,7 @@ use Zestic\Authentication\Entity\AuthLookup;
 use Zestic\Authentication\Entity\NewAuthLookup;
 use Zestic\Authentication\Exception\AuthLookupException;
 use Zestic\Authentication\Interactor\UpdateAuthLookup;
+use Zestic\Authentication\Interface\AuthLookupInterface;
 use Zestic\Authentication\Interface\NewAuthLookupInterface;
 
 class AuthenticationRepository implements UserRepositoryInterface
@@ -57,6 +58,7 @@ SQL;
         if ($result->valid()) {
             return $id;
         }
+
         throw new AuthLookupException('There was an problem saving the authentication user');
     }
 
@@ -73,14 +75,19 @@ SQL;
         return $result->valid();
     }
 
-    public function findLookupByUserId($userId): ?AuthLookupInterface
+    public function findLookupByEmail(string $email): ?AuthLookupInterface
+    {
+        return $this->authAdapter->findAuthLookupByParameter('email', $email);
+    }
+
+    public function findLookupByUserId(string|int $userId): ?AuthLookupInterface
     {
         return $this->authAdapter->findAuthLookupByParameter('user_id', $userId);
     }
 
-    public function findLookupByUsername($userId): ?AuthLookupInterface
+    public function findLookupByUsername(string $username): ?AuthLookupInterface
     {
-        return $this->authAdapter->findAuthLookupByParameter('username', $userId);
+        return $this->authAdapter->findAuthLookupByParameter('username', $username);
     }
 
     public function isEmailAvailable(string $email): bool

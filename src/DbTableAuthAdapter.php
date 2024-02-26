@@ -12,6 +12,7 @@ use Zestic\Authentication\Entity\TableContext;
 
 class DbTableAuthAdapter extends CallbackCheckAdapter
 {
+    protected $authLookupClass = AuthLookup::class;
     private ?Result $result;
 
     public function __construct(
@@ -94,7 +95,7 @@ SQL;
             return null;
         }
 
-        return new AuthLookup($authLookup['id'], [], $authLookup);
+        return new $this->authLookupClass($authLookup['id'], [], $authLookup);
     }
 }
 
