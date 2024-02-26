@@ -121,7 +121,7 @@ SQL;
 
     public function updateLookup(UuidInterface $id, array $data): bool
     {
-        $setData = $this->prepData($data);
+        $setData = $this->prepDataForUpdate($data);
         $sql = <<<SQL
 UPDATE {$this->authAdapter->getTableName()}
 SET $setData
