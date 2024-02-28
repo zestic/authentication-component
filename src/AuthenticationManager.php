@@ -7,6 +7,8 @@ namespace Zestic\Authentication;
 use Mezzio\Authentication\UserInterface;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\UuidInterface;
+use Zestic\Authentication\Interface\AuthenticationResponseInterface;
+use Zestic\Authentication\Interface\GenerateAuthenticationResponseInterface;
 use Zestic\Authentication\Interface\NewAuthLookupInterface;
 use Zestic\Authentication\Interface\FindUserByIdInterface;
 use Zestic\Authentication\Interface\UserClientDataInterface;
@@ -15,30 +17,33 @@ class AuthenticationManager
 {
     public function __construct(
         protected AuthenticationRepository $authenticationRepository,
-        protected FindUserByIdInterface $findUserById,
+        protected GenerateAuthenticationResponseInterface $generateAuthenticationResults,
         protected ?LoggerInterface $logger = null,
         protected ?UserClientDataInterface $userClientData = null,
     ) {
     }
 
-    public function authenticate(string $credential, ?string $password = null): ?UserInterface
+    public function authenticate(string $credential, ?string $password = null): AuthenticationResponseInterface
     {
-        if (!$authLookup = $this->authenticationRepository->authenticate($credential, $password)) {
+        $authLookup = $this->authenticationRepository->authenticate($credential, $password);
+        if (!$authLookup) {
             $result = $this->authenticationRepository->authenticationResult();
+            $errors = $result->getMessages();
+
+            $this->logFailedAuthentication($credential, implode(',', $errors));
+
+            return $this->generateAuthenticationResults->failed($credential, $errors);
         }
 
-        $user = $this->findUserById->find($authLookup->getUserId());
-        if (!$user) {
-            // throw
+        $result = $this->generateAuthenticationResults->succeeded($authLookup);
+
+        if ($result->isSuccess()) {
+            $this->logSuccessfulAuthentication($credential);
+        } else {
+            $this->logFailedAuthentication($credential);
         }
-        $data = [
-            'credential' => $credential,
-            'success' => true,
-        ];
 
-        $this->logIt('AuthenticateUser', $data);
-
-        return $user;
+        return $result;
     }
 
     public function logout()
@@ -64,6 +69,16 @@ class AuthenticationManager
         $this->logIt('RegisterUser', $data);
 
         return $id;
+    }
+
+    private function logFailedAuthentication(string $credential, string $reason = ''): void
+    {
+
+    }
+
+    private function logSuccessfulAuthentication(string $credential): void
+    {
+
     }
 
     private function logIt(string $message, array $data): void

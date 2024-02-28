@@ -8,13 +8,18 @@ use Zestic\Authentication\Interface\UserInterface;
 
 final class AuthenticationResponse implements AuthenticationResponseInterface
 {
-    public function response(UserInterface $user, string $jwt, int $expiresAt): array
+    public function __construct(
+        private array $data,
+    ) {
+    }
+
+    public function isSuccess(): bool
     {
-        return [
-            'expiresAt' => $expiresAt,
-            'jwt'       => $jwt,
-            'user'      => $user,
-            'success'   => true,
-        ];
+        return $this->data['success'];
+    }
+
+    public function toArray(): array
+    {
+        return $this->data;
     }
 }

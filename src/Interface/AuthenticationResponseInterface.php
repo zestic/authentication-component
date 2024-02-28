@@ -7,5 +7,6 @@ use Zestic\Authentication\Interface\UserInterface;
 
 interface AuthenticationResponseInterface
 {
-    public function response(UserInterface $user, string $jwt, int $expiresAt): array;
+    public function isSuccess(): bool;
+    public function toArray(): array;
 }
