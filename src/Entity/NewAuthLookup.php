@@ -11,7 +11,7 @@ final class NewAuthLookup implements NewAuthLookupInterface
         private string $email,
         private string $password,
         private string|int $userId,
-        private ?string $username = null,
+        private string $username,
     ) {}
 
     public function getEmail(): string
@@ -29,7 +29,7 @@ final class NewAuthLookup implements NewAuthLookupInterface
         return $this->userId;
     }
 
-    public function getUsername(): ?string
+    public function getUsername(): string
     {
         return $this->username;
     }

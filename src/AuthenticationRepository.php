@@ -50,8 +50,8 @@ class AuthenticationRepository implements UserRepositoryInterface
         $email = strtolower($authLookup->getEmail());
         $sql = <<<SQL
 INSERT INTO {$this->tableName}
-    (email, id, password, username)
-     VALUES ('{$email}', '{$id->toString()}', '$password', '$username');
+    (email, id, password, user_id, username)
+     VALUES ('{$email}', '{$id->toString()}', '$password', '{$authLookup->getUserId()}' '$username');
 SQL;
         $statement = $this->dbAdapter->createStatement($sql);
         $result = $statement->execute();
