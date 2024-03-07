@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Zestic\Authentication;
 
-use Mezzio\Authentication\UserInterface;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\UuidInterface;
 use Zestic\Authentication\Interface\AuthenticationResponseInterface;
 use Zestic\Authentication\Interface\GenerateAuthenticationResponseInterface;
 use Zestic\Authentication\Interface\NewAuthLookupInterface;
-use Zestic\Authentication\Interface\FindUserByIdInterface;
 use Zestic\Authentication\Interface\UserClientDataInterface;
 
 class AuthenticationManager
@@ -46,14 +44,41 @@ class AuthenticationManager
         return $result;
     }
 
+    public function generatePasswordResetToken(string $email): ?string
+    {
+        if (!$lookup = $this->authenticationRepository->findLookupByEmail($email)) {
+            return null;
+        }
+
+        return $this->authenticationRepository->createPasswordReset($lookup);
+    }
+
     public function logout()
     {
 
     }
 
-    public function setPassword()
+    public function setPasswordForEmail(string $email, string $password): bool
     {
+        $lookup = $this->authenticationRepository->findLookupByEmail($email);
+        if (!$lookup) {
+            return false;
+        }
 
+        return $this->authenticationRepository->updateLookup($lookup->getId(), ['password' => $password]);
+    }
+
+    public function setPasswordForToken(string $token, string $password): bool
+    {
+        $passwordReset = $this->authenticationRepository->findPasswordResetByToken($token);
+        if (!$this->authenticationRepository->updateLookup(
+            $passwordReset->getLookupId(),
+            ['password' => $password],
+        )) {
+            throw new \Exception('Could not update password');
+        }
+
+        return $this->authenticationRepository->deletePasswordReset($token);
     }
 
     public function register(NewAuthLookupInterface $newAuthLookup): UuidInterface

@@ -77,6 +77,11 @@ class DbTableAuthAdapter extends CallbackCheckAdapter
         return $this->result;
     }
 
+    public function getTableContext(): TableContext
+    {
+        return $this->tableContext;
+    }
+
     public function getTableName(): string
     {
         return $this->tableName;

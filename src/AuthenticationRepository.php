@@ -8,23 +8,23 @@ use Laminas\Db\Adapter\Adapter as DbAdapter;
 use Mezzio\Authentication\UserRepositoryInterface;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
-use Zestic\Authentication\DbTableAuthAdapter;
 use Zestic\Authentication\Entity\AuthLookup;
-use Zestic\Authentication\Entity\NewAuthLookup;
+use Zestic\Authentication\Entity\PasswordReset;
 use Zestic\Authentication\Exception\AuthLookupException;
-use Zestic\Authentication\Interactor\UpdateAuthLookup;
 use Zestic\Authentication\Interface\AuthLookupInterface;
 use Zestic\Authentication\Interface\NewAuthLookupInterface;
 
 class AuthenticationRepository implements UserRepositoryInterface
 {
     public DbAdapter $dbAdapter;
+    public string $resetTableName;
     public string $tableName;
 
     public function __construct(
         public readonly DbTableAuthAdapter $authAdapter,
     ) {
         $this->dbAdapter = $this->authAdapter->getDbAdapter();
+        $this->resetTableName = $this->authAdapter->getTableContext()->passwordResetTableName;
         $this->tableName = $this->authAdapter->getTableName();
     }
 
@@ -58,8 +58,36 @@ SQL;
         if ($result->valid()) {
             return $id;
         }
-
         throw new AuthLookupException('There was an problem saving the authentication user');
+    }
+
+    public function createPasswordReset(AuthLookupInterface $authLookup): string
+    {
+        $randomString = md5((string)rand());
+        $token = substr($randomString, 0, 8);
+        $sql = <<<SQL
+    INSERT INTO {$this->resetTableName}
+    (token, auth_lookup_id)
+    VALUES ('{$token}', '{$authLookup->getId()}');
+SQL;
+        $statement = $this->dbAdapter->createStatement($sql);
+        $result = $statement->execute();
+        if ($result->valid()) {
+            return $token;
+        }
+        throw new AuthLookupException('There was an problem saving the password reset');
+    }
+
+    public function deletePasswordReset(string $token): bool
+    {
+        $sql = <<<SQL
+DELETE FROM {$this->resetTableName}
+WHERE token = '{$token}';
+SQL;
+        $statement = $this->dbAdapter->createStatement($sql);
+        $result = $statement->execute();
+
+        return $result->valid();
     }
 
     public function deleteLookup(UuidInterface|string $id): bool
@@ -88,6 +116,24 @@ SQL;
     public function findLookupByUsername(string $username): ?AuthLookupInterface
     {
         return $this->authAdapter->findAuthLookupByParameter('username', $username);
+    }
+
+    public function findPasswordResetByToken(string $token):?PasswordReset
+    {
+        $resetTable = $this->authAdapter->getTableContext()->passwordResetTableName;
+        $sql = <<<SQL
+SELECT * 
+FROM {$resetTable}
+WHERE token = '{$token}';
+SQL;
+        $statement = $this->dbAdapter->createStatement($sql);
+        $result = $statement->execute();
+
+        $data = $result->getAffectedRows();
+
+        return (new PasswordReset())
+            ->setToken($token)
+            ->setLookupId(Uuid::fromString($data['auth_lookup_id']));
     }
 
     public function isEmailAvailable(string $email): bool

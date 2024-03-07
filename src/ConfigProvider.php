@@ -52,7 +52,8 @@ final class ConfigProvider
                     'credential' => 'password',
                     'identity'   => 'username',
                 ],
-                'tableName' => 'auth_lookups',
+                'lookupTableName' => 'auth_lookups',
+                'resetTableName' => 'reset_tokens',
             ],
         ];
     }
