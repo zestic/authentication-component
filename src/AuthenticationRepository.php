@@ -51,7 +51,7 @@ class AuthenticationRepository implements UserRepositoryInterface
         $sql = <<<SQL
 INSERT INTO {$this->tableName}
     (email, id, password, user_id, username)
-     VALUES ('{$email}', '{$id->toString()}', '$password', '{$authLookup->getUserId()}' '$username');
+     VALUES ('{$email}', '{$id->toString()}', '$password', '{$authLookup->getUserId()}', '$username');
 SQL;
         $statement = $this->dbAdapter->createStatement($sql);
         $result = $statement->execute();
@@ -61,7 +61,7 @@ SQL;
         throw new AuthLookupException('There was an problem saving the authentication user');
     }
 
-    public function createPasswordReset(AuthLookupInterface $authLookup): string
+    public function createPasswordReset(AuthLookupInterface $authLookup): PasswordReset
     {
         $randomString = md5((string)rand());
         $token = substr($randomString, 0, 8);
@@ -73,16 +73,18 @@ SQL;
         $statement = $this->dbAdapter->createStatement($sql);
         $result = $statement->execute();
         if ($result->valid()) {
-            return $token;
+            return (new PasswordReset())
+                ->setToken($token)
+                ->setLookupId($authLookup->getId());
         }
         throw new AuthLookupException('There was an problem saving the password reset');
     }
 
-    public function deletePasswordReset(string $token): bool
+    public function deletePasswordReset(PasswordReset $passwordReset): bool
     {
         $sql = <<<SQL
 DELETE FROM {$this->resetTableName}
-WHERE token = '{$token}';
+WHERE token = '{$passwordReset->getToken()}';
 SQL;
         $statement = $this->dbAdapter->createStatement($sql);
         $result = $statement->execute();
@@ -116,6 +118,33 @@ SQL;
     public function findLookupByUsername(string $username): ?AuthLookupInterface
     {
         return $this->authAdapter->findAuthLookupByParameter('username', $username);
+    }
+
+    public function findPasswordResetByAuthLookupId(UuidInterface|string $id):?PasswordReset
+    {
+        $id = (string)$id;
+        $resetTable = $this->authAdapter->getTableContext()->passwordResetTableName;
+        $sql = <<<SQL
+SELECT * 
+FROM {$resetTable}
+WHERE auth_lookup_id = '{$id}';
+SQL;
+
+        return $this->findAndHydratePasswordReset($sql);
+    }
+
+    private function findAndHydratePasswordReset(string $sql):?PasswordReset
+    {
+        $statement = $this->dbAdapter->createStatement($sql);
+        $result = $statement->execute();
+
+        if (!$data = $result->current()) {
+            return null;
+        }
+
+        return (new PasswordReset())
+            ->setToken($data['token'])
+            ->setLookupId(Uuid::fromString($data['auth_lookup_id']));
     }
 
     public function findPasswordResetByToken(string $token):?PasswordReset

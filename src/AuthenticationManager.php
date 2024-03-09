@@ -6,6 +6,7 @@ namespace Zestic\Authentication;
 
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\UuidInterface;
+use Zestic\Authentication\Entity\PasswordReset;
 use Zestic\Authentication\Interface\AuthenticationResponseInterface;
 use Zestic\Authentication\Interface\GenerateAuthenticationResponseInterface;
 use Zestic\Authentication\Interface\NewAuthLookupInterface;
@@ -44,13 +45,21 @@ class AuthenticationManager
         return $result;
     }
 
-    public function generatePasswordResetToken(string $email): ?string
+    public function generatePasswordReset(string $email): ?PasswordReset
     {
-        if (!$lookup = $this->authenticationRepository->findLookupByEmail($email)) {
+        if (!$authLookup = $this->authenticationRepository->findLookupByEmail($email)) {
             return null;
         }
+        if ($passwordReset = $this->authenticationRepository->findPasswordResetByAuthLookupId($authLookup->getId())) {
+            $this->authenticationRepository->deletePasswordReset($passwordReset);
+        }
 
-        return $this->authenticationRepository->createPasswordReset($lookup);
+        return $this->authenticationRepository->createPasswordReset($authLookup);
+    }
+
+    public function getRepository(): AuthenticationRepository
+    {
+        return $this->authenticationRepository;
     }
 
     public function logout()
