@@ -77,17 +77,30 @@ class AuthenticationManager
         return $this->authenticationRepository->updateLookup($lookup->getId(), ['password' => $password]);
     }
 
-    public function setPasswordForToken(string $token, string $password): bool
+    public function setPasswordForToken(string $token, string $password): AuthenticationResponse
     {
-        $passwordReset = $this->authenticationRepository->findPasswordResetByToken($token);
+        if (!$passwordReset = $this->authenticationRepository->findPasswordResetByToken($token)) {
+            return new AuthenticationResponse([
+                'success' => false,
+                'message' => AuthenticationResponseErrors::RESET_TOKEN_NOT_FOUND->value,
+            ]);
+        }
         if (!$this->authenticationRepository->updateLookup(
             $passwordReset->getLookupId(),
             ['password' => $password],
         )) {
-            throw new \Exception('Could not update password');
+            return new AuthenticationResponse([
+                'success' => false,
+                'message' => AuthenticationResponseErrors::SYSTEM_ERROR->value,
+            ]);
         }
 
-        return $this->authenticationRepository->deletePasswordReset($token);
+        $success = $this->authenticationRepository->deletePasswordReset($passwordReset);
+
+        return new AuthenticationResponse([
+            'success' => $success,
+            'message' => AuthenticationResponseErrors::SUCCESS->value,
+        ]);
     }
 
     public function register(NewAuthLookupInterface $newAuthLookup): UuidInterface
