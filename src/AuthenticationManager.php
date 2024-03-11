@@ -82,7 +82,7 @@ class AuthenticationManager
         if (!$passwordReset = $this->authenticationRepository->findPasswordResetByToken($token)) {
             return new AuthenticationResponse([
                 'success' => false,
-                'message' => AuthenticationResponseErrors::RESET_TOKEN_NOT_FOUND->value,
+                'message' => AuthenticationResponseErrors::INVALID_RESET_TOKEN->value,
             ]);
         }
         if (!$this->authenticationRepository->updateLookup(

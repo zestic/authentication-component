@@ -22,4 +22,18 @@ final class AuthenticationResponse implements AuthenticationResponseInterface
     {
         return $this->data;
     }
+
+    public function hasDetail(string $key): bool
+    {
+        return isset($this->data[$key]);
+    }
+
+    public function getDetail(string $key): mixed
+    {
+        if (!isset($this->data[$key])) {
+            throw new \Exception('The key "'. $key. '" does not exist. If you are not certain a key will exist, call the hasDetail() method first.');
+        }
+
+        return $this->data[$key];
+    }
 }

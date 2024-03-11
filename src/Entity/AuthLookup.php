@@ -26,6 +26,16 @@ class AuthLookup implements AuthLookupInterface
         return $this->details['userId'];
     }
 
+    public function removeDetail(string $name)
+    {
+        unset($this->details[$name]);
+    }
+
+    public function setDetail(string $name, $value)
+    {
+        $this->details[$name] = $value;
+    }
+
     public function getDetail(string $name, $default = null)
     {
         return $this->details[$name] ?? $default;
