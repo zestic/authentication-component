@@ -7,12 +7,12 @@ use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use Zestic\Authentication\Interface\AuthLookupInterface;
 
-final class AuthLookup implements AuthLookupInterface
+class AuthLookup implements AuthLookupInterface
 {
     public function __construct(
-        private string $identity,
-        private array $roles = [],
-        private array $details = [],
+        protected string $identity,
+        protected array $roles = [],
+        protected array $details = [],
     ) {
     }
 
@@ -24,6 +24,16 @@ final class AuthLookup implements AuthLookupInterface
     public function getUserId()
     {
         return $this->details['userId'];
+    }
+
+    public function removeDetail(string $name)
+    {
+        unset($this->details[$name]);
+    }
+
+    public function setDetail(string $name, $value)
+    {
+        $this->details[$name] = $value;
     }
 
     public function getDetail(string $name, $default = null)

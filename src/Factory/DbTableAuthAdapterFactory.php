@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 namespace Zestic\Authentication\Factory;
 
-use Zestic\Authentication\DbTableAuthAdapter;
 use ConfigValue\GatherConfigValues;
 use Laminas\Db\Adapter\Adapter;
 use Psr\Container\ContainerInterface;
+use Zestic\Authentication\DbTableAuthAdapter;
 
 final class DbTableAuthAdapterFactory
 {
@@ -16,7 +16,7 @@ final class DbTableAuthAdapterFactory
 
     public function __invoke(ContainerInterface $container): DbTableAuthAdapter
     {
-        $authConfig = (new GatherConfigValues)($container, 'graphqlauth');
+        $authConfig = (new GatherConfigValues)($container, 'authentication');
         $config = $authConfig[$this->configName];
         if (empty($config['credentialValidationCallback'])) {
             $config['credentialValidationCallback'] = function ($hash, $password) {
@@ -40,7 +40,7 @@ final class DbTableAuthAdapterFactory
             $config['column']['identity'],
             $config['column']['credential'],
             $config['credentialValidationCallback'],
-            $config['hasRestrictedUsernames'] ?? false,
+            $config['hasRestrictedUsernames'] ?? null,
         );
     }
 }

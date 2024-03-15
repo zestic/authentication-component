@@ -7,5 +7,6 @@ interface NewAuthLookupInterface
 {
     public function getEmail(): string;
     public function getPassword(): string;
-    public function getUsername(): ?string;
+    public function getUserId(): string|int;
+    public function getUsername(): string;
 }

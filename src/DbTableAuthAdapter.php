@@ -3,29 +3,29 @@ declare(strict_types=1);
 
 namespace Zestic\Authentication;
 
-use Zestic\Authentication\Entity\AuthLookup;
 use Laminas\Authentication\Adapter\DbTable\CallbackCheckAdapter;
 use Laminas\Authentication\Result;
 use Laminas\Db\Adapter\Adapter as DbAdapter;
 use Laminas\Db\ResultSet\ResultSet;
+use Zestic\Authentication\Entity\AuthLookup;
+use Zestic\Authentication\Entity\TableContext;
 
-final class DbTableAuthAdapter extends CallbackCheckAdapter
+class DbTableAuthAdapter extends CallbackCheckAdapter
 {
+    protected $authLookupClass = AuthLookup::class;
     private ?Result $result;
 
     public function __construct(
         DbAdapter $laminasDb,
-        $tableName,
-        $identityColumn,
-        $credentialColumn,
+        protected TableContext $tableContext,
         $credentialValidationCallback,
-        private $hasRestrictedUsernames,
+        private $hasRestrictedUsernames = null,
     ) {
         parent::__construct(
             $laminasDb,
-            $tableName,
-            $identityColumn,
-            $credentialColumn,
+            $tableContext->authLookupTableName,
+            $tableContext->authLookupIdentityColumn,
+            $tableContext->authLookupCredentialColumn,
             $credentialValidationCallback,
         );
     }
@@ -77,6 +77,11 @@ final class DbTableAuthAdapter extends CallbackCheckAdapter
         return $this->result;
     }
 
+    public function getTableContext(): TableContext
+    {
+        return $this->tableContext;
+    }
+
     public function getTableName(): string
     {
         return $this->tableName;
@@ -95,7 +100,7 @@ SQL;
             return null;
         }
 
-        return new AuthLookup($authLookup['id'], [], $authLookup);
+        return new $this->authLookupClass($authLookup['id'], [], $authLookup);
     }
 }
 
