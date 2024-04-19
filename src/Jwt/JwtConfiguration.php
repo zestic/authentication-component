@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Zestic\Authentication\Jwt;
 
+use Firebase\JWT\Key;
+
 final class JwtConfiguration
 {
     /** @var string */
@@ -40,5 +42,10 @@ final class JwtConfiguration
     public function getTokenTtl(): int
     {
         return $this->tokenTtl;
+    }
+
+    public function getFirebaseKey(): Key
+    {
+        return new Key($this->publicKey, $this->algorithm);
     }
 }

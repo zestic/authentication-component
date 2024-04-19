@@ -15,7 +15,7 @@ class DecodeJwtToken implements DecodeJwtTokenInterface
 
     public function decode(string $jwt): array
     {
-        $decoded = JWT::decode($jwt, $this->config->getPublicKey(), [$this->config->getAlgorithm()]);
+        $decoded = JWT::decode($jwt, $this->config->getFirebaseKey());
 
         return (new StdClassToArray)($decoded);
     }
