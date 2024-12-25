@@ -21,8 +21,7 @@
     "psr/container": "^1.0 || ^2.0",
     "ramsey/uuid": "^4.0@dev",
     "robmorgan/phinx": "^0.15.4 || ^0.16",
-    "symfony/dotenv": "^5.2 || ^6.0",
-    "tuupola/cors-middleware": "^1.2.0"
+    "symfony/dotenv": "^5.2 || ^6.0"
   },
   "minimum-stability": "dev",
   "autoload": {
