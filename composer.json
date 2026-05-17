@@ -17,7 +17,7 @@
     "laminas/laminas-authentication": "^2.8.0",
     "laminas/laminas-db": "^2.11.0",
     "mezzio/mezzio-authentication": "^1.8.0",
-    "nesbot/carbon": "^2.39",
+    "nesbot/carbon": "^2.39 || ^3.0",
     "psr/container": "^1.0 || ^2.0",
     "ramsey/uuid": "^4.0@dev",
     "robmorgan/phinx": "^0.15.4 || ^0.16",
