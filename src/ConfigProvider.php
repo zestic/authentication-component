@@ -87,7 +87,7 @@ final class ConfigProvider
     {
         return [
             'commands' => [
-                'auth:reset-password'        => ResetPasswordCommand::class,
+//                'auth:reset-password'        => ResetPasswordCommand::class,
             ],
         ];
     }
