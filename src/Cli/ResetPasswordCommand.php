@@ -16,7 +16,7 @@ final class ResetPasswordCommand extends Command
 
     public function __construct(
         private ContainerInterface $container,
-    ) {
+    ) { in
         parent::__construct();
     }
 
@@ -28,7 +28,7 @@ final class ResetPasswordCommand extends Command
             ->addOption('config', 'c', InputOption::VALUE_OPTIONAL);
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $username = $input->getArgument('username');
         $password = $input->getArgument('password');
